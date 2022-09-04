@@ -1,26 +1,25 @@
 package com.example.musicplayer.presentation.feed
 
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -30,22 +29,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.musicplayer.MainViewModel
 import com.example.musicplayer.R
 import com.example.musicplayer.Screen
 import com.example.musicplayer.data.BottomMenuContent
 import com.example.musicplayer.data.ImageWithText
 import com.example.musicplayer.data.WithText
 import com.example.musicplayer.data.entities.Song
+import com.example.musicplayer.other.SEARCH_BAR_CLOSE_TAG
+import com.example.musicplayer.other.getMusicItemTag
 
 
+@ExperimentalFoundationApi
 @Composable
 fun MusicFeedScreen(
     navController: NavController,
-    viewModel: MainViewModel = hiltViewModel()
+    feedViewModel: FeedViewModel = hiltViewModel()
 ) {
-    val songs = viewModel.mediaItem.observeAsState(listOf()).value
-
+    val uiState by feedViewModel.uiState
     var selectedTabIndex by remember {
         mutableStateOf(0)
     }
@@ -79,9 +79,7 @@ fun MusicFeedScreen(
                 selectedTabIndex = it
             }
             when (selectedTabIndex) {
-                0 -> Recently(
-                    listOfAllSong = songs,
-                )
+                0 -> Recently()
                 1 -> PopularSection(
                     imageWithText = listOf(
                         ImageWithText(
@@ -99,7 +97,7 @@ fun MusicFeedScreen(
                     ),
                     modifier = Modifier
                         .fillMaxWidth(),
-                    listOfAllSong = songs,
+                    listOfAllSong = uiState.songList,
                     navController = navController
                 )
             }
@@ -132,7 +130,11 @@ fun MusicFeedScreen(
 }
 
 @Composable
-fun TopSection(navController: NavController) {
+fun TopSection(
+    navController: NavController,
+    feedViewModel: FeedViewModel = hiltViewModel()
+) {
+    val uiState by feedViewModel.uiState
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
@@ -143,8 +145,11 @@ fun TopSection(navController: NavController) {
             navController
         )
         SearchBar(
-            Modifier
-                .padding(top = 35.dp)
+            modifier = Modifier
+                .padding(top = 35.dp),
+            query = uiState.searchBarText,
+            onSearchQueryChanged = feedViewModel::onSearchQueryChanged
+
         )
         com.example.musicplayer.presentation.greetings.TopSection(
             modifier = Modifier
@@ -169,22 +174,23 @@ fun ArrowBack(
 }
 
 @Composable
-fun SearchBar(modifier: Modifier) {
+fun SearchBar(
+    modifier: Modifier,
+    query: String,
+    onSearchQueryChanged: (String) -> Unit
+) {
 
-    var text by remember {
-        mutableStateOf("")
-    }
+    val focusManager = LocalFocusManager.current
 
     OutlinedTextField(
-        value = text, onValueChange = {
-            text = it
-        },
+        value = query,
+        onValueChange = onSearchQueryChanged,
         maxLines = 1,
         singleLine = true,
         textStyle = TextStyle(color = Color.Black),
         leadingIcon = {
             Icon(
-                painter = painterResource(id = R.drawable.ic_baseline_search_24),
+                painter = painterResource(id = R.drawable.ic_search),
                 contentDescription = null
             )
         },
@@ -206,7 +212,21 @@ fun SearchBar(modifier: Modifier) {
             textColor = Color(android.graphics.Color.parseColor("#464646")),
             focusedIndicatorColor = Color.LightGray,
             unfocusedIndicatorColor = Color(android.graphics.Color.parseColor("#EFEFEF"))
-        )
+        ),
+        trailingIcon = {
+            if(query.isNotBlank() && query.isNotEmpty()){
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_baseline_close_24),
+                    contentDescription = "Close",
+                    modifier = modifier
+                        .testTag(SEARCH_BAR_CLOSE_TAG)
+                        .clickable {
+                            onSearchQueryChanged("")
+                            focusManager.clearFocus()
+                        }
+                )
+            }
+        }
     )
 }
 
@@ -323,14 +343,16 @@ fun TabView(
 }
 
 
+@ExperimentalFoundationApi
 @Composable
 fun PopularSection(
     modifier: Modifier = Modifier,
     imageWithText: List<ImageWithText>,
-    viewModel: MainViewModel = hiltViewModel(),
     listOfAllSong: List<Song>,
-    navController: NavController
+    navController: NavController,
+    feedViewModel: FeedViewModel = hiltViewModel()
 ) {
+
     Column {
         LazyRow(
             modifier = modifier,
@@ -388,20 +410,6 @@ fun PopularSection(
                 start = 32.dp, top = 21.dp
             )
         )
-//        var songList: List<Song> = arrayListOf()
-//
-//         viewModel.mediaItem.observe(
-//            LocalLifecycleOwner.current
-//         ){
-//             when(it.status){
-//                 Status.SUCCESS -> {
-//                     it.data?.let { songs ->
-//                         songList = songs
-//                     }
-//                 }
-//                 else -> Unit
-//             }
-//         }
         LazyColumn(
             contentPadding = PaddingValues(bottom = 10.dp),
             modifier = Modifier
@@ -409,19 +417,35 @@ fun PopularSection(
                 .height(330.dp)
                 .padding(top = 25.dp)
         ) {
-            items(
-                items = listOfAllSong
-            ) { song ->
-                MusicListItem(
-                    song = song,
-                    onClick = {
-                        viewModel.playOrToggleSong(it)
-                        navController.navigate(Screen.SongScreen.route)
-                    }
-                )
+            listOfAllSong.groupBy { it.title.first() }.toSortedMap().forEach {
+                stickyHeader {
+                    MusicListHeader(text = it.key.toString())
+                }
+                itemsIndexed(it.value) { index, song ->
+                    MusicListItem(
+                        song = song,
+                        onClick = { it1 ->
+                            feedViewModel.playOrToggleSong(it1)
+                            navController.navigate(Screen.SongScreen.route)
+                        },
+                        modifier = Modifier
+                            .testTag(getMusicItemTag(index)),
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+fun MusicListHeader(text: String) {
+    Text(
+        text = text,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 10.dp),
+        color = Color.DarkGray
+    )
 }
 
 
@@ -497,31 +521,19 @@ fun BottomMenuItem(
 @Composable
 fun Recently(
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel = hiltViewModel(),
-    listOfAllSong: List<Song>,
 ) {
 
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = modifier.height(66.dp))
-        ImageInRecently(
-            modifier = modifier
-                .padding(
-                    start = 57.dp,
-                    end = 63.dp
-                )
-        )
+        ImageInRecently(modifier = modifier)
         Spacer(modifier = modifier.height(7.dp))
-        TextColumnInRecently(
-            modifier = modifier
-                .padding(
-                    start = 153.dp,
-                    end = 153.dp
-                )
-        )
-
+        TextColumnInRecently(modifier = modifier)
 
     }
 }

@@ -7,12 +7,11 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
-import android.util.Log
 import androidx.media.MediaBrowserServiceCompat
-import com.example.musicplayer.other.Constants.MEDIA_ROOT_ID
 import com.example.musicplayer.exoplayer.callbacks.MusicPlaybackPreparer
 import com.example.musicplayer.exoplayer.callbacks.MusicPlayerEventListener
 import com.example.musicplayer.exoplayer.callbacks.MusicPlayerNotificationListener
+import com.example.musicplayer.other.Constants.MEDIA_ROOT_ID
 import com.example.musicplayer.other.Constants.NETWORK_ERROR
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.Player
@@ -125,17 +124,16 @@ class MusicService : MediaBrowserServiceCompat() {
 
     override fun onDestroy() {
         super.onDestroy()
-        serviceScope.cancel()
-
         exoPlayer.removeListener(musicPlayerEventListener)
         exoPlayer.release()
+        serviceScope.cancel()
     }
 
     override fun onGetRoot(
         clientPackageName: String,
         clientUid: Int,
         rootHints: Bundle?
-    ): BrowserRoot? {
+    ): BrowserRoot {
         return BrowserRoot(MEDIA_ROOT_ID, null)
     }
 
@@ -147,17 +145,17 @@ class MusicService : MediaBrowserServiceCompat() {
             MEDIA_ROOT_ID -> {
                 val resultsSent = firebaseMusicSource.whenReady { isInitialized ->
                     if (isInitialized) {
-                            result.sendResult(firebaseMusicSource.asMediaItems())
-                            if (!isPlayerInitialized && firebaseMusicSource.songs.isNotEmpty()) {
-                                preparePlayer(
-                                    firebaseMusicSource.songs,
-                                    firebaseMusicSource.songs[0],
-                                    false
-                                )
-                                isPlayerInitialized = true
-                            }
+                        result.sendResult(firebaseMusicSource.asMediaItems())
+                        if (!isPlayerInitialized && firebaseMusicSource.songs.isNotEmpty()) {
+                            preparePlayer(
+                                firebaseMusicSource.songs,
+                                firebaseMusicSource.songs[0],
+                                false
+                            )
+                            isPlayerInitialized = true
+                        }
                     } else {
-                        mediaSession.sendSessionEvent(NETWORK_ERROR,null)
+                        mediaSession.sendSessionEvent(NETWORK_ERROR, null)
                         result.sendResult(null)
                     }
                 }

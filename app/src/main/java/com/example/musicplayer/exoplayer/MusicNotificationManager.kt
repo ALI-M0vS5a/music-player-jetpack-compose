@@ -36,8 +36,9 @@ class MusicNotificationManager(
             .setChannelDescriptionResourceId(R.string.notification_channel_description)
             .setSmallIconResourceId(R.drawable.music)
             .setMediaDescriptionAdapter(DescriptionAdapter(mediaController))
-            .build()
-
+            .build().apply {
+                setMediaSessionToken(sessionToken)
+            }
     }
 
     fun showNotification(player: Player) {
@@ -79,6 +80,5 @@ class MusicNotificationManager(
                 })
             return null
         }
-
     }
 }

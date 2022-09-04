@@ -4,12 +4,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.material.ExperimentalMaterialApi
 import com.bumptech.glide.RequestManager
 import com.google.accompanist.pager.ExperimentalPagerApi
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@ExperimentalMaterialApi
+@ExperimentalFoundationApi
 @ExperimentalPagerApi
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -22,9 +25,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            viewModel.mediaItem.observeAsState(listOf()).value.apply {
-
-            }
+            viewModel.apply {}
             Navigation()
         }
     }

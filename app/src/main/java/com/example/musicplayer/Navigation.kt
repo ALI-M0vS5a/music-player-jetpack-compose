@@ -1,5 +1,7 @@
 package com.example.musicplayer
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -10,6 +12,8 @@ import com.example.musicplayer.presentation.feed.MusicFeedScreen
 import com.example.musicplayer.presentation.greetings.GreetingsScreen
 import com.google.accompanist.pager.ExperimentalPagerApi
 
+@ExperimentalMaterialApi
+@ExperimentalFoundationApi
 @ExperimentalPagerApi
 @Composable
 fun Navigation() {

@@ -2,19 +2,17 @@ package com.example.musicplayer.exoplayer
 
 import android.content.ComponentName
 import android.content.Context
-import android.media.browse.MediaBrowser
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import android.widget.MediaController
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.musicplayer.other.Constants.NETWORK_ERROR
 import com.example.musicplayer.other.Event
 import com.example.musicplayer.other.Resource
-import javax.annotation.meta.When
+
 
 
 class MusicServiceConnection(
@@ -58,11 +56,28 @@ class MusicServiceConnection(
         mediaBrowser.subscribe(parentId, callback)
     }
     fun unsubscribe(
-        parentId: String,
-        callback: MediaBrowserCompat.SubscriptionCallback
+        parentId: String
     ){
-        mediaBrowser.unsubscribe(parentId,callback)
+        mediaBrowser.unsubscribe(parentId)
     }
+
+    fun stopPlaying() = transportControls.stop()
+
+    fun seekTo(pos: Long) = transportControls.seekTo(pos)
+
+    fun pause() = transportControls.pause()
+
+    fun play() = transportControls.play()
+
+    fun fastForward() = transportControls.fastForward()
+
+    fun rewind() = transportControls.rewind()
+
+    fun skipToNextTrack() = transportControls.skipToNext()
+
+    fun skipToPrev() = transportControls.skipToPrevious()
+
+    fun playFromMediaId(mediaId: String) = transportControls.playFromMediaId(mediaId,null)
 
     private inner class MediaBrowserConnectionCallback(
         private val context: Context
@@ -119,6 +134,4 @@ class MusicServiceConnection(
         }
 
     }
-
-
 }

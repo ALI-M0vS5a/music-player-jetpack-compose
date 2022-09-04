@@ -1,102 +1,59 @@
 package com.example.musicplayer.presentation.details
 
-import android.support.v4.media.session.PlaybackStateCompat
-import android.widget.Toast
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import android.content.Context
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.musicplayer.MainViewModel
+import coil.Coil
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.example.musicplayer.R
 import com.example.musicplayer.data.entities.Song
-import com.example.musicplayer.exoplayer.isPlaying
-import com.example.musicplayer.exoplayer.toSong
 import com.example.musicplayer.presentation.greetings.TopSection
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.PagerState
-import com.google.accompanist.pager.rememberPagerState
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun SongScreen(
     modifier: Modifier = Modifier,
-    songViewModel: SongViewModel = hiltViewModel(),
-    mainViewModel: MainViewModel = hiltViewModel()
+    songViewModel: SongViewModel = hiltViewModel()
 ) {
-    var progress by remember {
-        mutableStateOf(0f)
-    }
-    var curPlayerMilliSeconds by remember {
-        mutableStateOf(0L)
-    }
-    var curSongDuration by remember {
-        mutableStateOf(0L)
-    }
-
-    val state = rememberPagerState()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var curPlayingSong: Song? = null
-    var playbackState: PlaybackStateCompat? = null
-    val listOfAllSongs = mainViewModel.mediaItem.observeAsState(listOf()).value
+    val uiState = songViewModel.uiState.value
+    val defaultDominantColor = MaterialTheme.colors.surface
+    var dominantColor by remember { mutableStateOf(defaultDominantColor) }
 
-    mainViewModel.playbackState.observeAsState().value?.let {
-        playbackState = it
-
-
-    }
-
-    songViewModel.curPlayingPosition.observe(
-        lifecycleOwner
-    ) {
-        curPlayerMilliSeconds = it
-
-    }
-    songViewModel.curSongDuration.observe(
-        lifecycleOwner
-    ){
-        curSongDuration = it
-    }
-
-
-    mainViewModel.curPlayingSong.observe(lifecycleOwner) {
-        if (it == null) return@observe
-        curPlayingSong = it.toSong()
-        fun switchToCurrentPlayingSong(song: Song) {
-            val newItemIndex = listOfAllSongs.indexOf(song)
-            if (newItemIndex != -1) {
-                scope.launch {
-                    state.scrollToPage(newItemIndex)
-                    curPlayingSong = song
-                }
-            }
+    LaunchedEffect(key1 = uiState.image) {
+        setColorFromImage(
+            url = uiState.image,
+            context = context,
+            viewModel = songViewModel
+        ) {
+            dominantColor = it
         }
-        switchToCurrentPlayingSong(curPlayingSong ?: return@observe)
     }
-
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(color = Color.White)
+            .background(
+                brush = Brush.verticalGradient(
+                    listOf(
+                        dominantColor,
+                        defaultDominantColor
+                    )
+                )
+            )
+            .verticalScroll(rememberScrollState())
     ) {
         Column(modifier = modifier) {
             TopSection(
@@ -110,9 +67,7 @@ fun SongScreen(
                     .fillMaxWidth()
             )
             Spacer(modifier = modifier.height(50.dp))
-            SongViewPager(
-                listOfAllSongs = listOfAllSongs,
-                state = state,
+            SongView(
                 modifier = modifier
                     .fillMaxWidth()
                     .height(320.dp)
@@ -120,44 +75,16 @@ fun SongScreen(
             Spacer(modifier = modifier.height(50.dp))
             PausePlaySection(
                 modifier = modifier,
-                curPlayingSong = curPlayingSong,
-                playbackState = playbackState
+                isPlaying = uiState.isPlaying,
+                song = uiState.currentPlayingSong!!,
+                onPlayPauseButtonPressed = songViewModel::onPlayPauseButtonPressed
             )
             Spacer(modifier = modifier.height(20.dp))
             Slider(
-                value = progress,
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                colors = SliderDefaults.colors(
-                    activeTrackColor = Color.Black.copy(alpha = 0.7f),
-                    inactiveTrackColor = Color.Black.copy(alpha = 0.4f),
-                    thumbColor = Color.Black
-                ),
-                onValueChange = {
-                    progress = it
-                },
-                enabled = true,
-                steps = 5,
-                onValueChangeFinished = {
-
-                },
-                interactionSource = MutableInteractionSource(),
-                valueRange = 0f..100f,
+                progress = songViewModel.uiState.value.sliderValue,
+                onSliderValueChange = songViewModel::onSliderValueChange,
+                state = songViewModel.uiState.value.musicSliderState
             )
-            Spacer(modifier = Modifier.height(15.dp))
-
-            Row(
-                modifier = modifier
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                val dateFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
-                val textCurTime = dateFormat.format(curPlayerMilliSeconds)
-                Text(text = textCurTime)
-                Text(text = dateFormat.format(curSongDuration))
-            }
         }
     }
 }
@@ -200,30 +127,31 @@ fun ImageInTopView(
 }
 
 
-@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun SongViewPager(
+fun SongView(
     modifier: Modifier = Modifier,
-    listOfAllSongs: List<Song>,
-    state: PagerState
+    songViewModel: SongViewModel = hiltViewModel()
 ) {
-    HorizontalPager(
-        count = listOfAllSongs.size,
-        state = state,
+    val uiState = songViewModel.uiState.value
+    LazyColumn(
         modifier = modifier
-    ) { page ->
-        SongViewPagerList(
-            song = listOfAllSongs[page]
-        )
+    ) {
+        item {
+            uiState.currentPlayingSong?.let {
+                SongViewPagerList(song = it)
+            }
+
+        }
     }
 }
 
 @Composable
 fun PausePlaySection(
     modifier: Modifier = Modifier,
-    mainViewModel: MainViewModel = hiltViewModel(),
-    curPlayingSong: Song? = null,
-    playbackState: PlaybackStateCompat? = null
+    song: Song,
+    onPlayPauseButtonPressed: (Song) -> Unit,
+    isPlaying: Boolean = true,
+    songViewModel: SongViewModel = hiltViewModel()
 ) {
     Row(
         modifier = modifier
@@ -236,7 +164,7 @@ fun PausePlaySection(
             contentDescription = "skip_previous",
             modifier = modifier
                 .clickable {
-                    mainViewModel.skipTpPreviousSong()
+                    songViewModel.skipToPreviousSong()
                 }
         )
         Spacer(modifier = modifier.width(35.43.dp))
@@ -244,9 +172,7 @@ fun PausePlaySection(
             modifier = modifier
                 .size(74.dp),
             onClick = {
-                curPlayingSong?.let {
-                    mainViewModel.playOrToggleSong(it, true)
-                }
+                onPlayPauseButtonPressed(song)
             },
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(
@@ -254,7 +180,7 @@ fun PausePlaySection(
                 contentColor = Color.White
             )
         ) {
-            if (playbackState?.isPlaying == true) {
+            if (isPlaying) {
                 Icon(
                     painter = painterResource(
                         id = R.drawable.ic_baseline_pause_24
@@ -281,9 +207,59 @@ fun PausePlaySection(
             contentDescription = "skip_next",
             modifier = modifier
                 .clickable {
-                    mainViewModel.skipToNextSong()
+                    songViewModel.skipToNextSong()
                 }
         )
+    }
+}
+
+@Composable
+fun Slider(
+    modifier: Modifier = Modifier,
+    progress: Float,
+    onSliderValueChange: (Float) -> Unit,
+    state: MusicSliderState
+) {
+    Slider(
+        value = progress,
+        onValueChange = onSliderValueChange,
+        colors = SliderDefaults.colors(
+            activeTrackColor = Color.Black,
+            inactiveTrackColor = Color.LightGray,
+            thumbColor = Color.White
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 10.dp, top = 46.dp, end = 10.dp)
+    )
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = state.timePassedFormatted,
+            color = Color.Black
+        )
+        Text(
+            text = state.timeLeftFormatted,
+            color = Color.Black
+        )
+    }
+}
+
+private suspend fun setColorFromImage(
+    url: String,
+    context: Context,
+    viewModel: SongViewModel,
+    onImageLoaded: (Color) -> Unit
+) {
+    val request = ImageRequest.Builder(context).data(url).build()
+    request.context.imageLoader.execute(request).drawable?.let {
+        viewModel.calcDominantColor(it){ color ->
+            onImageLoaded.invoke(color)
+        }
     }
 }
 

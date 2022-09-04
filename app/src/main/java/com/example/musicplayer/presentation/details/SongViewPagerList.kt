@@ -24,7 +24,8 @@ fun SongViewPagerList(
     song: Song
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -32,10 +33,6 @@ fun SongViewPagerList(
         SongViewPagerImage(
             song = song,
             modifier = modifier
-                .padding(
-                    start = 99.dp,
-                    end = 98.dp
-                )
         )
         Spacer(modifier = modifier.height(7.dp))
         SongTextColumn(
