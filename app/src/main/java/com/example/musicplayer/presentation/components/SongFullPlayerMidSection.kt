@@ -1,4 +1,4 @@
-package com.example.musicplayer.presentation.details
+package com.example.musicplayer.presentation.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -19,7 +19,7 @@ import coil.request.ImageRequest
 import com.example.musicplayer.data.entities.Song
 
 @Composable
-fun SongViewPagerList(
+fun SongFullPlayerMidSection(
     modifier: Modifier = Modifier,
     song: Song
 ) {
@@ -30,7 +30,7 @@ fun SongViewPagerList(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        SongViewPagerImage(
+        SongFullPlayerImage(
             song = song,
             modifier = modifier
         )
@@ -43,7 +43,7 @@ fun SongViewPagerList(
 }
 
 @Composable
-fun SongViewPagerImage(
+fun SongFullPlayerImage(
     modifier: Modifier = Modifier,
     song: Song
 ) {

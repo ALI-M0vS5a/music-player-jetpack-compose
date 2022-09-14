@@ -56,6 +56,7 @@ class FeedViewModel @Inject constructor(
                         it.mediaId!!,
                         it.description.title.toString(),
                         it.description.subtitle.toString(),
+                        it.description.subtitle.toString(),
                         it.description.mediaUri.toString(),
                         it.description.iconUri.toString()
                     )

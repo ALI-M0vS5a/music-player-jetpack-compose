@@ -1,6 +1,7 @@
 package com.example.musicplayer.presentation.feed
 
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
@@ -31,10 +31,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.musicplayer.R
 import com.example.musicplayer.Screen
-import com.example.musicplayer.data.BottomMenuContent
-import com.example.musicplayer.data.ImageWithText
-import com.example.musicplayer.data.WithText
+import com.example.musicplayer.data.entities.BottomMenuContent
+import com.example.musicplayer.data.entities.ImageWithText
 import com.example.musicplayer.data.entities.Song
+import com.example.musicplayer.data.entities.WithText
 import com.example.musicplayer.other.SEARCH_BAR_CLOSE_TAG
 import com.example.musicplayer.other.getMusicItemTag
 
@@ -49,59 +49,84 @@ fun MusicFeedScreen(
     var selectedTabIndex by remember {
         mutableStateOf(0)
     }
+    val finish: () -> Unit = {
+        navController.navigate(Screen.GreetingsScreen.route)
+    }
+    BackHandler {
+        finish()
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(android.graphics.Color.parseColor("#FFFFFF")))
     ) {
-        Column(modifier = Modifier) {
-            Spacer(modifier = Modifier.height(20.dp))
-            TopSection(navController)
-            Spacer(modifier = Modifier.height(41.dp))
-            HelloSection()
-            Spacer(modifier = Modifier.height(41.dp))
-            TabView(
-                withText = listOf(
-                    WithText(
-                        text = "Recently"
-                    ),
-                    WithText(
-                        text = "Popular"
-                    ),
-                    WithText(
-                        text = "Favourite"
-                    ),
-                    WithText(
-                        text = "Top 10"
-                    )
-                ),
-            ) {
-                selectedTabIndex = it
+        LazyColumn {
+            item {
+                Spacer(modifier = Modifier.height(27.dp))
+                TopSection(navController)
             }
-            when (selectedTabIndex) {
-                0 -> Recently()
-                1 -> PopularSection(
-                    imageWithText = listOf(
-                        ImageWithText(
-                            image = painterResource(id = R.drawable.taylor),
-                            text = "Taylor"
+            item {
+                Spacer(modifier = Modifier.height(27.dp))
+                HelloSection()
+            }
+            item {
+                Spacer(modifier = Modifier.height(27.dp))
+                TabView(
+                    withText = listOf(
+                        WithText(
+                            text = "Recently"
                         ),
-                        ImageWithText(
-                            image = painterResource(id = R.drawable.cardi_b),
-                            text = "Cardi B"
+                        WithText(
+                            text = "Popular"
                         ),
-                        ImageWithText(
-                            image = painterResource(id = R.drawable.lopez),
-                            text = "Lopez"
+                        WithText(
+                            text = "Favourite"
                         ),
+                        WithText(
+                            text = "Top 10"
+                        )
                     ),
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    listOfAllSong = uiState.songList,
-                    navController = navController
-                )
+                ) {
+                    selectedTabIndex = it
+                }
+                when (selectedTabIndex) {
+                    0 -> Recently()
+                    1 -> PopularSection(
+                        imageWithText = listOf(
+                            ImageWithText(
+                                image = painterResource(id = R.drawable.lipa),
+                                text = "Duo Lipa"
+                            ),
+                            ImageWithText(
+                                image = painterResource(id = R.drawable.gomez),
+                                text = "Gomez"
+                            ),
+                            ImageWithText(
+                                image = painterResource(id = R.drawable.bieber),
+                                text = "Bieber"
+                            ),
+                            ImageWithText(
+                                image = painterResource(id = R.drawable.taylor),
+                                text = "Taylor"
+                            ),
+                            ImageWithText(
+                                image = painterResource(id = R.drawable.cardi_b),
+                                text = "Cardi B"
+                            ),
+                            ImageWithText(
+                                image = painterResource(id = R.drawable.lopez),
+                                text = "Lopez"
+                            )
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        listOfAllSong = uiState.songList,
+                        navController = navController
+                    )
+                }
             }
         }
+
         BottomMenu(
             items = listOf(
                 BottomMenuContent(
@@ -214,7 +239,7 @@ fun SearchBar(
             unfocusedIndicatorColor = Color(android.graphics.Color.parseColor("#EFEFEF"))
         ),
         trailingIcon = {
-            if(query.isNotBlank() && query.isNotEmpty()){
+            if (query.isNotBlank() && query.isNotEmpty()) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_baseline_close_24),
                     contentDescription = "Close",
@@ -352,15 +377,13 @@ fun PopularSection(
     navController: NavController,
     feedViewModel: FeedViewModel = hiltViewModel()
 ) {
-
     Column {
         LazyRow(
-            modifier = modifier,
-            horizontalArrangement = Arrangement.SpaceEvenly
+            modifier = modifier
         ) {
             items(imageWithText.size) {
                 Column(
-                    modifier = modifier.padding(top = 41.dp)
+                    modifier = modifier.padding(top = 41.dp, start = 23.dp)
                 ) {
                     Image(
                         painter = imageWithText[it].image,
@@ -384,7 +407,8 @@ fun PopularSection(
                                     bottomEnd = CornerSize(30.dp),
                                     bottomStart = CornerSize(30.dp)
                                 ),
-                            )
+                            ),
+                        contentScale = ContentScale.Crop
                     )
                     Text(
                         text = imageWithText[it].text,
@@ -407,30 +431,35 @@ fun PopularSection(
             lineHeight = 30.sp,
             color = Color.Black,
             modifier = modifier.padding(
-                start = 32.dp, top = 21.dp
+                start = 27.dp, top = 21.dp
             )
         )
-        LazyColumn(
-            contentPadding = PaddingValues(bottom = 10.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(330.dp)
-                .padding(top = 25.dp)
+        CompositionLocalProvider(
+            LocalOverscrollConfiguration provides null
         ) {
-            listOfAllSong.groupBy { it.title.first() }.toSortedMap().forEach {
-                stickyHeader {
-                    MusicListHeader(text = it.key.toString())
-                }
-                itemsIndexed(it.value) { index, song ->
-                    MusicListItem(
-                        song = song,
-                        onClick = { it1 ->
-                            feedViewModel.playOrToggleSong(it1)
-                            navController.navigate(Screen.SongScreen.route)
-                        },
-                        modifier = Modifier
-                            .testTag(getMusicItemTag(index)),
-                    )
+            LazyColumn(
+                contentPadding = PaddingValues(bottom = 150.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2000.dp)
+                    .padding(top = 25.dp, start = 21.dp),
+                userScrollEnabled = false
+            ) {
+                listOfAllSong.groupBy { it.title.first() }.toSortedMap().forEach {
+                    stickyHeader {
+                        MusicListHeader(text = it.key.toString())
+                    }
+                    itemsIndexed(it.value) { index, song ->
+                        MusicListItem(
+                            song = song,
+                            onClick = { it1 ->
+                                feedViewModel.playOrToggleSong(it1)
+                                navController.navigate(Screen.SongScreen.route)
+                            },
+                            modifier = Modifier
+                                .testTag(getMusicItemTag(index)),
+                        )
+                    }
                 }
             }
         }
@@ -465,7 +494,7 @@ fun BottomMenu(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .height(100.dp)
+            .height(80.dp)
             .background(
                 color = Color(android.graphics.Color.parseColor("#F5B501")),
                 shape = CircleShape.copy(
@@ -510,7 +539,7 @@ fun BottomMenuItem(
             painter = painterResource(id = item.iconId),
             contentDescription = null,
             modifier = Modifier
-                .size(57.dp)
+                .size(38.dp)
                 .clickable {
                     onItemClick()
                 }
@@ -525,8 +554,7 @@ fun Recently(
 
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

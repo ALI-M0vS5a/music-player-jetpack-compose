@@ -6,7 +6,7 @@ sealed class Resources<T>(
     open val message: String = "",
     open val errorType: ErrorType = ErrorType.UNKNOWN
 ){
-    class Loading<T>() : Resources<T>()
+    class Loading<T> : Resources<T>()
 
     data class Success<T>(override val data: T?, override val message: String = "") :
             Resources<T>(data, message)

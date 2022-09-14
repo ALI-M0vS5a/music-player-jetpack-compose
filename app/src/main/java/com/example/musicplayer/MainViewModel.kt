@@ -8,6 +8,9 @@ import com.example.musicplayer.other.getSong
 import com.example.musicplayer.presentation.usecases.MusicUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -16,7 +19,14 @@ class MainViewModel @Inject constructor(
     private val musicUseCase: MusicUseCase
 ) : ViewModel() {
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading = _isLoading.asStateFlow()
+
     init {
+        viewModelScope.launch {
+            delay(3000)
+            _isLoading.value = false
+        }
         subscribeToMusic()
     }
 

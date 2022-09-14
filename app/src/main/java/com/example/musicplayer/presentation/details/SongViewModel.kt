@@ -11,9 +11,11 @@ import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import androidx.palette.graphics.Palette
 import com.example.musicplayer.data.entities.Song
+import com.example.musicplayer.data.repository.LyricsRepo
 import com.example.musicplayer.exoplayer.MusicService
 import com.example.musicplayer.exoplayer.currentPlayingPosition
 import com.example.musicplayer.exoplayer.isPlaying
+import com.example.musicplayer.other.Resources
 import com.example.musicplayer.other.getSong
 import com.example.musicplayer.presentation.usecases.MusicUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,8 +25,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SongViewModel @Inject constructor(
-    private val musicUseCase: MusicUseCase
+    private val musicUseCase: MusicUseCase,
+    private val lyricsRepo: LyricsRepo
 ) : ViewModel() {
+
 
     private val _uiState = mutableStateOf(SongScreenState())
     val uiState: State<SongScreenState> = _uiState
@@ -54,6 +58,7 @@ class SongViewModel @Inject constructor(
     private fun collectCurrentSong() = viewModelScope.launch {
         curPlayingSong.asFlow().collectLatest {
             it?.getSong()?.let { song ->
+                fetchLyrics(song)
                 _uiState.value = uiState.value.copy(
                     currentPlayingSong = song,
                     image = song.imageUrl
@@ -121,6 +126,21 @@ class SongViewModel @Inject constructor(
             palette?.dominantSwatch?.rgb?.let { colorValue ->
                 onFinish(Color(colorValue))
             }
+        }
+    }
+
+    private fun fetchLyrics(song: Song) = viewModelScope.launch {
+        val lyrics = lyricsRepo.getLyrics(
+            q_track = song.title,
+            q_artist = song.artists
+        )
+        when(lyrics){
+            is Resources.Success -> {
+                _uiState.value = uiState.value.copy(
+                    lyrics = lyrics.data!!.message.body.lyrics.lyrics_body
+                )
+            }
+            else -> Unit
         }
     }
 }

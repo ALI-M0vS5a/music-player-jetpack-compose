@@ -2,6 +2,7 @@ package com.example.musicplayer.presentation.allsongs
 
 
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,10 +24,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.imageLoader
 import coil.request.ImageRequest
 import com.example.musicplayer.R
+import com.example.musicplayer.Screen
 import com.example.musicplayer.data.entities.Song
 import com.example.musicplayer.presentation.feed.MusicListItem
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -35,12 +38,19 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 @ExperimentalPagerApi
 @Composable
 fun AllSongsScreen(
-    allSongsViewModel: AllSongsViewModel = hiltViewModel()
+    allSongsViewModel: AllSongsViewModel = hiltViewModel(),
+    navController: NavController
 ) {
     val uiState = allSongsViewModel.uiState.value
     val defaultDominantColor = MaterialTheme.colors.surface
     val context = LocalContext.current
     var dominantColor by remember { mutableStateOf(defaultDominantColor) }
+    val finish: () -> Unit = {
+        navController.navigate(Screen.MusicFeedScreen.route)
+    }
+    BackHandler {
+        finish()
+    }
     LaunchedEffect(key1 = uiState.image) {
         setColorFromImage(
             url = uiState.image,
@@ -61,13 +71,20 @@ fun AllSongsScreen(
                         defaultDominantColor
                     )
                 )
-            )
+            ),
+        contentAlignment = Alignment.BottomStart
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
 
-
-            Spacer(modifier = Modifier.height(50.dp))
-            LazyColumn(contentPadding = PaddingValues(3.dp), modifier = Modifier) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            LazyColumn(contentPadding = PaddingValues(
+                bottom = 300.dp,
+                top = 50.dp
+            ),
+                modifier = Modifier
+                    .fillMaxHeight()
+            ) {
                 items(
                     items = uiState.songList
                 ) { song ->
@@ -77,23 +94,23 @@ fun AllSongsScreen(
                             allSongsViewModel.playOrToggleSong(it)
                         }
                     )
+
                 }
+
             }
-            Spacer(modifier = Modifier.height(340.dp))
-            uiState.currentPlayingSong?.let {
-                CurrentlyPlayingItem(
-                    song = it,
-                    isPlaying = uiState.isPlaying,
-                    progress = uiState.sliderValue,
-                    onPlayPauseButtonPress = allSongsViewModel::onPlayPauseButtonPressed,
-                    onSliderValueChange = allSongsViewModel::onSliderValueChange,
-                    modifier = Modifier
-                        .height(88.dp)
-                        .padding(4.5.dp),
-                    defaultDominantColor = defaultDominantColor,
-                    dominantColor = dominantColor
-                )
-            }
+        }
+        uiState.currentPlayingSong?.let {
+            CurrentlyPlayingItem(
+                song = it,
+                isPlaying = uiState.isPlaying,
+                progress = uiState.sliderValue,
+                onPlayPauseButtonPress = allSongsViewModel::onPlayPauseButtonPressed,
+                onSliderValueChange = allSongsViewModel::onSliderValueChange,
+                modifier = Modifier
+                    .height(88.dp),
+                defaultDominantColor = defaultDominantColor,
+                dominantColor = dominantColor
+            )
         }
     }
 }
@@ -134,8 +151,7 @@ fun CurrentlyPlayingItem(
                             )
                         )
                     )
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxWidth()
             ) {
                 Image(
                     painter = rememberAsyncImagePainter(song.imageUrl),
@@ -171,19 +187,14 @@ fun CurrentlyPlayingItem(
                 )
             }
         }
-        Slider(
-            value = progress,
-            onValueChange = onSliderValueChange,
-            colors = SliderDefaults.colors(
-                activeTrackColor = Color.DarkGray,
-                inactiveTrackColor = Color.LightGray,
-                thumbColor = Color.DarkGray
-            ),
-            modifier = modifier
+        LinearProgressIndicator(
+            modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.Transparent)
-                .padding(top = 68.dp)
-                .align(Alignment.BottomCenter)
+                .padding(top = 58.dp)
+                .align(Alignment.BottomCenter),
+            progress = progress,
+            color = Color.White
         )
     }
 }

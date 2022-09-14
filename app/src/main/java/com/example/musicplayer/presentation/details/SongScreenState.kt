@@ -14,7 +14,8 @@ data class SongScreenState(
     val sliderValue: Float = 0f,
     val curPlayingPosition: Long? = null,
     val musicSliderState: MusicSliderState = MusicSliderState(),
-    val dominantColor: Color = Color.White
+    val dominantColor: Color = Color.White,
+    val lyrics: String = ""
 )
 
 data class MusicSliderState(

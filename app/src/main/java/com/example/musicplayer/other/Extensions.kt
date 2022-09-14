@@ -8,6 +8,7 @@ import com.example.musicplayer.data.entities.Song
 fun MediaBrowserCompat.MediaItem.getSong(): Song = Song(
     mediaId = description.mediaId!!,
     title = description.title.toString(),
+    artists = description.subtitle.toString(),
     subtitle = description.subtitle.toString(),
     songUrl = description.mediaUri.toString(),
     imageUrl = description.iconUri.toString()
@@ -16,6 +17,7 @@ fun MediaBrowserCompat.MediaItem.getSong(): Song = Song(
 fun MediaMetadataCompat.getSong(): Song = Song(
     mediaId = description.mediaId!!,
     title = description.title.toString(),
+    artists = description.subtitle.toString(),
     subtitle = description.subtitle.toString(),
     songUrl = description.mediaUri.toString(),
     imageUrl = description.iconUri.toString()

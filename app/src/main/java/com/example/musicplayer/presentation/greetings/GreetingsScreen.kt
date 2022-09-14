@@ -1,5 +1,7 @@
 package com.example.musicplayer.presentation.greetings
 
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -11,17 +13,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
 import com.example.musicplayer.Screen
 
 
 @Composable
-fun GreetingsScreen(navController: NavController) {
+fun GreetingsScreen(
+    navController: NavController,
+    finish: () -> Unit
+) {
+    BackHandler {
+        finish()
+    }
     Box(
         modifier = Modifier
             .background(Color(android.graphics.Color.parseColor("#FFFFFF")))

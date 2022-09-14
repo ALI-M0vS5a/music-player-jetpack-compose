@@ -27,8 +27,8 @@ class FirebaseMusicSource @Inject constructor(
 
     suspend fun fetchMediaData() = withContext(Dispatchers.IO) {
         state = STATE_INITIALIZED
-        val allSongs = musicDatabase.getAllSongs()
-        songs = allSongs.map { song ->
+        val allSongs = musicDatabase.getAllSongs().data
+        songs = allSongs!!.map { song ->
             Builder()
                 .putString(METADATA_KEY_ARTIST, song.subtitle)
                 .putString(METADATA_KEY_MEDIA_ID, song.mediaId)
@@ -39,6 +39,7 @@ class FirebaseMusicSource @Inject constructor(
                 .putString(METADATA_KEY_ALBUM_ART_URI, song.imageUrl)
                 .putString(METADATA_KEY_DISPLAY_SUBTITLE, song.subtitle)
                 .putString(METADATA_KEY_DISPLAY_DESCRIPTION, song.subtitle)
+                .putString(METADATA_KEY_ARTIST, song.artists)
                 .build()
         }
         state = STATE_INITIALIZED
